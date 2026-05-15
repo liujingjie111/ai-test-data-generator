@@ -1,7 +1,33 @@
 # 智能测试数据生成平台
 
 一个基于AI的智能测试数据生成平台，支持多种数据类型生成、模板管理和AI辅助生成，帮助开发者和测试工程师快速生成高质量的测试数据。
-![alt text](image.png)
+
+---
+
+## 📸 功能预览
+
+### 🏠 首页
+![首页](screenshots/01-home.png)
+
+### ⚙️ 内置生成器
+![内置生成器](screenshots/02-generator.png)
+
+### 📋 模板管理
+![模板管理](screenshots/03-templates.png)
+
+### 🤖 AI智能生成
+![AI智能生成](screenshots/04-ai-generate.png)
+
+### 🔑 API密钥管理
+![API密钥管理](screenshots/05-api-keys.png)
+
+### 📚 API文档
+![API文档](screenshots/06-api-docs.png)
+
+### 📜 历史记录
+![历史记录](screenshots/07-history.png)
+
+---
 
 ## 技术栈
 
@@ -17,6 +43,8 @@
 - Ant Design 5
 - Axios
 - Vite
+
+---
 
 ## 项目结构
 
@@ -49,8 +77,11 @@ ai-test-data-generator/
 │   │   └── types/            # TypeScript类型定义
 │   ├── package.json
 │   └── vite.config.ts
+├── screenshots/              # 项目截图
 └── .env.example              # 环境变量示例
 ```
+
+---
 
 ## 快速开始
 
@@ -120,6 +151,8 @@ ai-test-data-generator/
 - 后端API文档：http://localhost:8000/docs
 - OpenAPI规范：http://localhost:8000/redoc
 
+---
+
 ## 配置说明
 
 所有配置通过环境变量管理，可在`.env`文件中设置：
@@ -129,6 +162,8 @@ ai-test-data-generator/
 | QWEN_API_KEY | 通义千问API密钥 | - | 是 |
 | QWEN_BASE_URL | API基础URL | https://dashscope.aliyuncs.com/compatible-mode/v1 | 否 |
 | DATABASE_URL | 数据库连接字符串 | sqlite:///./test_data_generator.db | 否 |
+
+---
 
 ## 内置数据生成器
 
@@ -193,6 +228,8 @@ ai-test-data-generator/
 | timestamp | 时间戳 |
 | random_string | 随机字符串 |
 
+---
+
 ## API文档
 
 启动后端服务后，可通过以下地址访问交互式API文档：
@@ -200,7 +237,7 @@ ai-test-data-generator/
 - Swagger UI：http://localhost:8000/docs
 - ReDoc：http://localhost:8000/redoc
 
-主要API端点：
+### 主要API端点：
 - `POST /api/generate` - 生成测试数据
 - `POST /api/ai/generate` - AI辅助生成
 - `GET /api/generators` - 获取支持的生成器列表
@@ -211,6 +248,8 @@ ai-test-data-generator/
 - `DELETE /api/history/{id}` - 删除单个历史记录
 - `POST /api/history/batch-delete` - 批量删除历史记录
 - `GET /api/history/stats` - 获取历史记录统计
+
+---
 
 ## 使用示例
 
@@ -249,9 +288,9 @@ const response = await fetch("http://localhost:8000/api/generate", {
   body: JSON.stringify({
     count: 10,
     fields: [
-      { name: "姓名", type: "name" },
-      { name: "手机号", type: "phone" },
-      { name: "邮箱", type: "email" },
+      { name: "姓名", "type": "name" },
+      { name: "手机号", "type": "phone" },
+      { name: "邮箱", "type": "email" },
     ],
   }),
 });
@@ -269,6 +308,8 @@ console.log(data);
 要求手机号以138开头，邮箱使用163邮箱。
 ```
 
+---
+
 ## 主要功能
 
 - **多种数据生成器**：内置20+种数据生成器，覆盖个人信息、地址、金融、企业、产品等场景
@@ -279,6 +320,8 @@ console.log(data);
 - **历史记录管理**：完整记录所有生成任务，支持查看、筛选和搜索历史记录
 - **批量删除**：支持多选并批量删除历史记录，高效清理无用数据
 - **可视化界面**：提供友好的Web界面，方便操作和管理
+
+---
 
 ## 许可证
 
