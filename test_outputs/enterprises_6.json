@@ -1,0 +1,52 @@
+{
+  "enterprises": [
+    {
+      "id": 1,
+      "company_name": "创思科百信息技术有限公司",
+      "credit_code": "8595875424FJHF75FGMD",
+      "industry": "教育培训",
+      "address": "成都市南山区商务大厦47层1228室",
+      "phone": "027-41152226"
+    },
+    {
+      "id": 2,
+      "company_name": "腾字大国数据服务有限公司",
+      "credit_code": "4464614039LTHAFPGE5K",
+      "industry": "教育培训",
+      "address": "南京市朝阳区软件园37层1217室",
+      "phone": "0571-25221509"
+    },
+    {
+      "id": 3,
+      "company_name": "天小信投资管理有限公司",
+      "credit_code": "5610550812UNM9E8C18A",
+      "industry": "人工智能",
+      "address": "深圳市海淀区创业园19层2208室",
+      "phone": "0532-24517590"
+    },
+    {
+      "id": 4,
+      "company_name": "远阿集团有限公司",
+      "credit_code": "9846580483TU436UPQE4",
+      "industry": "生物医药",
+      "address": "北京市海淀区写字楼1层721室",
+      "phone": "0755-60380982"
+    },
+    {
+      "id": 5,
+      "company_name": "信中快自动化有限公司",
+      "credit_code": "9851829715A0YK29NEEF",
+      "industry": "新材料",
+      "address": "南京市南山区孵化器41层733室",
+      "phone": "021-31329606"
+    },
+    {
+      "id": 6,
+      "company_name": "盛信智能科技有限公司",
+      "credit_code": "2078557944ATJ2XR79AQ",
+      "industry": "人工智能",
+      "address": "上海市武侯区金融街3层996室",
+      "phone": "021-22860836"
+    }
+  ]
+}

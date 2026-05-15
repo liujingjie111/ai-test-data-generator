@@ -1,0 +1,84 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "product_name": "OPPO环保电水壶A558",
+      "sku": "SKU-8GCTRXVGY7",
+      "price": 7188.93,
+      "stock": 9715,
+      "category": "电子产品"
+    },
+    {
+      "id": 2,
+      "product_name": "美的环保音箱B6870",
+      "sku": "SKU-HY6EZB2RUX",
+      "price": 955.61,
+      "stock": 697,
+      "category": "医疗器械"
+    },
+    {
+      "id": 3,
+      "product_name": "vivo自动电饭煲A2428",
+      "sku": "SKU-3D2D0PCA2K",
+      "price": 2795.33,
+      "stock": 634,
+      "category": "五金工具"
+    },
+    {
+      "id": 4,
+      "product_name": "苹果无线电风扇E3477",
+      "sku": "SKU-65AKTCBDON",
+      "price": 7008.5,
+      "stock": 9195,
+      "category": "电子产品"
+    },
+    {
+      "id": 5,
+      "product_name": "索尼多功能电风扇D1404",
+      "sku": "SKU-YI2VICQI2K",
+      "price": 9313.91,
+      "stock": 3207,
+      "category": "母婴用品"
+    },
+    {
+      "id": 6,
+      "product_name": "索尼迷你电水壶C5037",
+      "sku": "SKU-DHT3GLOD59",
+      "price": 6810.34,
+      "stock": 7086,
+      "category": "家居用品"
+    },
+    {
+      "id": 7,
+      "product_name": "华为高效眼镜D1355",
+      "sku": "SKU-9JVJ94QWJZ",
+      "price": 2320.58,
+      "stock": 2057,
+      "category": "运动户外"
+    },
+    {
+      "id": 8,
+      "product_name": "格力多功能手机B5559",
+      "sku": "SKU-WAUAKBM1YU",
+      "price": 294.42,
+      "stock": 4312,
+      "category": "美妆护肤"
+    },
+    {
+      "id": 9,
+      "product_name": "格力超薄鼠标A2134",
+      "sku": "SKU-0125NKP9YN",
+      "price": 5424.09,
+      "stock": 6991,
+      "category": "珠宝饰品"
+    },
+    {
+      "id": 10,
+      "product_name": "华为节能充电宝C201",
+      "sku": "SKU-EV8LNSJIOR",
+      "price": 8016.66,
+      "stock": 3480,
+      "category": "宠物用品"
+    }
+  ]
+}
