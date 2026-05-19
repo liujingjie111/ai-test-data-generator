@@ -1,6 +1,7 @@
 """AI request and response schemas."""
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Optional
 
 
 class AIRequest(BaseModel):
@@ -8,6 +9,8 @@ class AIRequest(BaseModel):
 
     prompt: str
     count: int = 1
+    api_key: Optional[str] = None
+    model: Optional[str] = Field(default="qwen-plus", description="AI模型名称")
 
 
 class AIResponse(BaseModel):

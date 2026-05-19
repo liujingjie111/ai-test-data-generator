@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom'
-import { Form, Cascader, InputNumber, Button, message, Typography, Card, Table, Space, Spin } from 'antd'
-import { DownloadOutlined } from '@ant-design/icons'
+import { Form, Cascader, InputNumber, Button, message, Typography, Card, Space, Spin } from 'antd'
 import { generateData } from '../services/generator'
 import { getTemplate } from '../services/template'
 import { exportToJSON, exportToCSV, exportToSQL, exportToExcel } from '../utils/export'
 import ProgressBar from '../components/ProgressBar'
+import DataPreview from '../components/DataPreview'
 import type { TemplateField } from '../types'
+import type { ColumnsType } from 'antd/es/table'
 
 const { Title } = Typography
 
@@ -99,7 +100,7 @@ interface TemplateMode {
   name: string
 }
 
-type TableRowData = Record<string, unknown> & { key: number }
+type TableRowData = Record<string, unknown>
 
 const Generator: React.FC = () => {
   const [form] = Form.useForm()
@@ -109,7 +110,7 @@ const Generator: React.FC = () => {
   const [generating, setGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
   const [tableData, setTableData] = useState<TableRowData[]>([])
-  const [columns, setColumns] = useState<Array<{ title: string; dataIndex: string; key: string; ellipsis?: boolean }>>([])
+  const [columns, setColumns] = useState<ColumnsType<TableRowData>>([])
   const [templateMode, setTemplateMode] = useState<TemplateMode | null>(null)
   const [currentGeneratorType, setCurrentGeneratorType] = useState('')
   const [generatedCount, setGeneratedCount] = useState(0)
@@ -212,7 +213,7 @@ const Generator: React.FC = () => {
 
         const tableRows: TableRowData[] = []
         for (let i = 0; i < count; i++) {
-          const row: Record<string, unknown> = { key: i }
+          const row: Record<string, unknown> = {}
           for (let f = 0; f < templateMode.fields.length; f++) {
             row[templateMode.fields[f].label] = allFieldResults[f][i]
           }
@@ -242,16 +243,14 @@ const Generator: React.FC = () => {
             dataIndex: key,
             key,
           }))
-          const dictTableData = items.map((item: { data: Record<string, unknown> }, index: number) => ({
-            key: index,
+          const dictTableData = items.map((item: { data: Record<string, unknown> }) => ({
             ...item.data,
           }))
           setColumns(dictColumns)
           setTableData(dictTableData)
         } else {
           setColumns([{ title: displayLabel, dataIndex: 'value', key: 'value' }])
-          setTableData(items.map((item: { data: unknown }, index: number) => ({
-            key: index,
+          setTableData(items.map((item: { data: unknown }) => ({
             value: item.data,
           })))
         }
@@ -277,7 +276,7 @@ const Generator: React.FC = () => {
       return
     }
 
-    const exportRows = tableData.map(({ key, ...rest }) => rest)
+    const exportRows = tableData
     const timestamp = new Date().toISOString().slice(0, 10)
 
     if (templateMode) {
@@ -409,48 +408,12 @@ const Generator: React.FC = () => {
       )}
 
       {tableData.length > 0 && (
-        <Card>
-          <Table
-            dataSource={tableData}
-            columns={columns}
-            pagination={{ pageSize: 10, showSizeChanger: true, showQuickJumper: true }}
-            size="small"
-            scroll={{ x: 'max-content' }}
-          />
-          <div style={{ marginTop: 16 }}>
-            <Space>
-              <span style={{ fontWeight: 500 }}>导出格式：</span>
-              <Button
-                icon={<DownloadOutlined />}
-                onClick={() => handleExport('excel')}
-                size="small"
-              >
-                Excel
-              </Button>
-              <Button
-                icon={<DownloadOutlined />}
-                onClick={() => handleExport('csv')}
-                size="small"
-              >
-                CSV
-              </Button>
-              <Button
-                icon={<DownloadOutlined />}
-                onClick={() => handleExport('json')}
-                size="small"
-              >
-                JSON
-              </Button>
-              <Button
-                icon={<DownloadOutlined />}
-                onClick={() => handleExport('sql')}
-                size="small"
-              >
-                SQL
-              </Button>
-            </Space>
-          </div>
-        </Card>
+        <DataPreview
+          dataSource={tableData}
+          columns={columns}
+          loading={false}
+          onExport={handleExport}
+        />
       )}
     </div>
   )

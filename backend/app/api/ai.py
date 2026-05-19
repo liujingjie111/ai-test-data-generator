@@ -1,12 +1,15 @@
 """API routes for AI-powered data generation."""
 
-from fastapi import APIRouter, Depends, status
+import logging
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_database_session, verify_api_key
+from app.exceptions import DataGenerationError
 from app.schemas import AIRequest, AIResponse
 from app.services import generate_with_ai
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ai", tags=["AI生成"])
 
 
@@ -35,18 +38,41 @@ router = APIRouter(prefix="/ai", tags=["AI生成"])
 )
 def generate_ai_data_endpoint(
     request: AIRequest,
+    request_obj: Request,
     db: Session = Depends(get_database_session),
-    api_key: str = Depends(verify_api_key),
+    _: str | None = Depends(verify_api_key),
 ):
     """使用 AI 生成测试数据。
 
     Args:
         request: 包含自然语言描述和生成数量的请求体。
+        request_obj: FastAPI Request 对象，用于获取客户端 IP。
         db: 数据库会话。
-        api_key: 验证通过的 API 密钥。
+        _: 验证通过的 API 密钥（为了一致性保留）。
 
     Returns:
         AI 生成的数据。
     """
-    result = generate_with_ai(db=db, prompt=request.prompt, count=request.count)
-    return AIResponse(prompt=result["prompt"], count=result["count"], data=result["data"])
+    if request.count > 100:
+        raise DataGenerationError(
+            message="生成数量不能超过100条",
+            details={"count": request.count},
+        )
+
+    client_ip = request_obj.client.host if request_obj.client else None
+    
+    logger.info(f"收到AI生成请求: prompt={request.prompt}, count={request.count}, model={request.model}")
+    try:
+        result = generate_with_ai(
+            db=db,
+            prompt=request.prompt,
+            count=request.count,
+            api_key=request.api_key,
+            model=request.model,
+            client_ip=client_ip
+        )
+        logger.info(f"AI生成成功: 生成了 {result['count']} 条数据")
+        return AIResponse(prompt=result["prompt"], count=result["count"], data=result["data"])
+    except Exception as e:
+        logger.error(f"AI生成失败: {str(e)}", exc_info=True)
+        raise

@@ -8,16 +8,18 @@ from app.config import settings
 class QwenClient:
     """Client for interacting with Qwen LLM API."""
 
-    def __init__(self, api_key: str | None = None, base_url: str | None = None):
+    def __init__(self, api_key: str | None = None, base_url: str | None = None, model: str = "qwen-plus"):
         """Initialize the Qwen client.
 
         Args:
             api_key: API key for authentication. Defaults to config settings.
             base_url: Base URL for the API. Defaults to config settings.
+            model: Model name to use.
         """
         self.api_key = api_key or settings.qwen_api_key
         self.base_url = base_url or settings.qwen_base_url
-        self.timeout = 60.0
+        self.model = model
+        self.timeout = 300.0
 
     def chat(self, prompt: str, system_prompt: str = "你是一个有用的助手。") -> str:
         """Send a chat message to the Qwen API.
@@ -44,7 +46,7 @@ class QwenClient:
         }
 
         payload = {
-            "model": "qwen-plus",
+            "model": self.model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt},

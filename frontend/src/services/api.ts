@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: '/api',
-  timeout: 10000,
+  timeout: 300000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -38,5 +38,10 @@ api.interceptors.response.use(
     return Promise.reject(new Error(message))
   },
 )
+
+export const generateWithAI = async (prompt: string, count: number, apiKey?: string, model?: string) => {
+  const response = await api.post('/ai/generate', { prompt, count, api_key: apiKey, model });
+  return response;
+};
 
 export default api

@@ -8,6 +8,7 @@ import type { Key } from 'react'
 const { Title } = Typography
 
 const generatorTypeOptions = [
+  { value: 'ai_generation', label: 'AI智能生成' },
   { value: 'name', label: '姓名' },
   { value: 'email', label: '邮箱' },
   { value: 'phone', label: '手机号' },
@@ -349,6 +350,22 @@ const History: React.FC = () => {
               <Descriptions.Item label="完成时间">
                 {detailData.completed_at ? new Date(detailData.completed_at).toLocaleString('zh-CN') : '-'}
               </Descriptions.Item>
+              {detailData.params && detailData.generator_type === 'ai_generation' && (
+                <Descriptions.Item label="AI提示词" span={2}>
+                  <span style={{ wordBreak: 'break-word' }}>
+                    {(() => {
+                      try {
+                        const parsed = typeof detailData.params === 'string' 
+                          ? JSON.parse(detailData.params) 
+                          : detailData.params;
+                        return parsed.prompt || JSON.stringify(parsed);
+                      } catch {
+                        return String(detailData.params);
+                      }
+                    })()}
+                  </span>
+                </Descriptions.Item>
+              )}
               {detailData.error_msg && (
                 <Descriptions.Item label="错误信息" span={2}>
                   <span style={{ color: '#cf1322' }}>{detailData.error_msg}</span>

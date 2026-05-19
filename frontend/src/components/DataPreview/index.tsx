@@ -38,6 +38,12 @@ const DataPreview: React.FC<DataPreviewProps> = ({
           >
             导出 Excel
           </Button>
+          <Button
+            icon={<DownloadOutlined />}
+            onClick={() => onExport('sql')}
+          >
+            导出 SQL
+          </Button>
         </Space>
       )}
       <Table
