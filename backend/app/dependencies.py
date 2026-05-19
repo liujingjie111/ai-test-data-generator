@@ -23,17 +23,14 @@ def _is_allowed_origin(request: Request) -> bool:
     origin = request.headers.get("origin")
     referer = request.headers.get("referer", "")
     
-    if not origin and not referer:
-        return False
+    # 快速路径：直接检查 Origin
+    if origin:
+        return origin in settings.cors_origins
     
-    allowed = settings.cors_origins
-    
-    if origin and origin in allowed:
-        return True
-    
+    # 如果没有 Origin，再检查 Referer（简单直接匹配）
     if referer:
-        for allowed_origin in allowed:
-            if referer.startswith(allowed_origin):
+        for allowed_origin in settings.cors_origins:
+            if allowed_origin in referer:
                 return True
     
     return False
