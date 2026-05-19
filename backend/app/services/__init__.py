@@ -1,6 +1,6 @@
 """Business logic service layer for the application."""
 
-from app.services.generator_service import generate_data
+from app.services.generator_service import generate_data, generate_template_data
 from app.services.template_service import (
     copy_template,
     create_template,
@@ -19,6 +19,7 @@ from app.services.export_service import (
 
 __all__ = [
     "generate_data",
+    "generate_template_data",
     "create_template",
     "get_template",
     "list_templates",
