@@ -23,14 +23,19 @@ def _is_allowed_origin(request: Request) -> bool:
     origin = request.headers.get("origin")
     referer = request.headers.get("referer", "")
     
-    # 快速路径：直接检查 Origin
-    if origin:
-        return origin in settings.cors_origins
+    print(f"DEBUG - Origin: {origin}, Referer: {referer}")
+    print(f"DEBUG - Allowed origins: {settings.cors_origins}")
     
-    # 如果没有 Origin，再检查 Referer（简单直接匹配）
+    # 只允许配置列表中的前端地址
+    if origin:
+        if origin in settings.cors_origins:
+            print(f"DEBUG - Origin allowed (exact match): {origin}")
+            return True
+    
     if referer:
         for allowed_origin in settings.cors_origins:
             if allowed_origin in referer:
+                print(f"DEBUG - Referer allowed: {referer}")
                 return True
     
     return False
@@ -47,6 +52,7 @@ async def verify_api_key(
     Requires valid API key for all other requests.
     """
     if _is_allowed_origin(request):
+        print(f"DEBUG - Request allowed without API key")
         return None
     
     if not credentials:

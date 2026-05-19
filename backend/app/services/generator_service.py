@@ -20,15 +20,15 @@ RANGE_VALIDATION_RULES = {
         'label': '年龄',
     },
     'amount': {
-        'min_key': 'min',
-        'max_key': 'max',
+        'min_key': 'min_amount',
+        'max_key': 'max_amount',
         'min_limit': 0,
         'max_limit': 1000000,
         'label': '金额',
     },
     'price': {
-        'min_key': 'min',
-        'max_key': 'max',
+        'min_key': 'min_price',
+        'max_key': 'max_price',
         'min_limit': 0,
         'max_limit': 1000000,
         'label': '价格',
@@ -57,8 +57,11 @@ def _validate_range_params(generator_type: str, params: dict | None) -> None:
         return
 
     rule = RANGE_VALIDATION_RULES[generator_type]
-    min_val = params.get(rule['min_key'])
-    max_val = params.get(rule['max_key'])
+    
+    # 向后兼容：支持旧的 min/max 参数名
+    # 显式检查 None，避免 0 值被错误忽略
+    min_val = params.get(rule['min_key']) if params.get(rule['min_key']) is not None else params.get('min')
+    max_val = params.get(rule['max_key']) if params.get(rule['max_key']) is not None else params.get('max')
 
     if min_val is None or max_val is None:
         return
@@ -125,6 +128,20 @@ def generate_data(
 
     _validate_range_params(generator_type, params)
 
+    # 准备传递给生成器的参数，处理兼容性
+    generator_params = {}
+    if params:
+        if generator_type in RANGE_VALIDATION_RULES:
+                rule = RANGE_VALIDATION_RULES[generator_type]
+                # 优先使用新的参数名
+                # 显式检查 None，避免 0 值被错误忽略
+                generator_params[rule['min_key']] = params.get(rule['min_key']) if params.get(rule['min_key']) is not None else params.get('min')
+                generator_params[rule['max_key']] = params.get(rule['max_key']) if params.get(rule['max_key']) is not None else params.get('max')
+                # 移除None值
+                generator_params = {k: v for k, v in generator_params.items() if v is not None}
+        else:
+            generator_params = params
+
     history_id = None
     if db is not None:
         history = GenerationHistory(
@@ -144,8 +161,8 @@ def generate_data(
     try:
         result = []
         for _ in range(count):
-            if params:
-                value = generator_func(**params)
+            if generator_params:
+                value = generator_func(**generator_params)
             else:
                 value = generator_func()
             result.append({"data": value})
@@ -215,9 +232,25 @@ def generate_template_data(
     for field in fields:
         try:
             generator_func = get_generator(field['type'])
-            generators.append((generator_func, field.get('params', {})))
+            params = field.get('params', {})
+            
+            # 准备传递给生成器的参数，处理兼容性
+            generator_params = {}
+            if params:
+                if field['type'] in RANGE_VALIDATION_RULES:
+                    rule = RANGE_VALIDATION_RULES[field['type']]
+                    # 优先使用新的参数名
+                    # 显式检查 None，避免 0 值被错误忽略
+                    generator_params[rule['min_key']] = params.get(rule['min_key']) if params.get(rule['min_key']) is not None else params.get('min')
+                    generator_params[rule['max_key']] = params.get(rule['max_key']) if params.get(rule['max_key']) is not None else params.get('max')
+                    # 移除None值
+                    generator_params = {k: v for k, v in generator_params.items() if v is not None}
+                else:
+                    generator_params = params
+            
+            generators.append((generator_func, generator_params))
             field_labels.append(field['label'])
-            _validate_range_params(field['type'], field.get('params'))
+            _validate_range_params(field['type'], params)
         except ValueError as e:
             raise DataGenerationError(
                 message=f"Invalid field type '{field['type']}': {str(e)}",

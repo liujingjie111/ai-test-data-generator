@@ -147,7 +147,7 @@ ai-test-data-generator/
 
 ### 访问应用
 
-- 前端界面：http://localhost:5173
+- 前端界面：http://localhost:5174
 - 后端API文档：http://localhost:8000/docs
 - OpenAPI规范：http://localhost:8000/redoc
 

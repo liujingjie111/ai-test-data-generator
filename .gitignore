@@ -41,11 +41,22 @@ dist/
 # Trae AI
 .trae/
 
-# Test files
-test_*.py
+# Test temporary files (keep test source files)
+# test_*.py
 
 # Logs
 *.log
 
 # Build output
 *.bak
+
+# UI Test temporary files
+ui_tests/allure-results/
+ui_tests/allure-report/
+ui_tests/screenshots/
+ui_tests/logs/
+ui_tests/downloads/
+ui_tests/data/
+ui_tests/.pytest_cache/
+ui_tests/__pycache__/
+

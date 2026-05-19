@@ -101,6 +101,25 @@ interface TemplateMode {
   name: string
 }
 
+interface RangeFieldDefinition {
+  minKey: string
+  maxKey: string
+  minLabel: string
+  maxLabel: string
+  minDefault?: number
+  maxDefault?: number
+  isInt?: boolean
+  minLimit: number
+  maxLimit: number
+}
+
+const rangeFieldConfig: Record<string, RangeFieldDefinition> = {
+  age: { minKey: 'min_age', maxKey: 'max_age', minLabel: '最小年龄', maxLabel: '最大年龄', minDefault: 18, maxDefault: 65, isInt: true, minLimit: 0, maxLimit: 150 },
+  amount: { minKey: 'min_amount', maxKey: 'max_amount', minLabel: '最小金额', maxLabel: '最大金额', minDefault: 0.01, maxDefault: 99999.99, minLimit: 0, maxLimit: 1000000 },
+  price: { minKey: 'min_price', maxKey: 'max_price', minLabel: '最低价格', maxLabel: '最高价格', minDefault: 0.01, maxDefault: 99999.99, minLimit: 0, maxLimit: 1000000 },
+  stock: { minKey: 'min_stock', maxKey: 'max_stock', minLabel: '最小库存', maxLabel: '最大库存', minDefault: 1, maxDefault: 1000, isInt: true, minLimit: 0, maxLimit: 10000000 },
+}
+
 type TableRowData = Record<string, unknown>
 
 const Generator: React.FC = () => {
@@ -116,14 +135,7 @@ const Generator: React.FC = () => {
   const [currentGeneratorType, setCurrentGeneratorType] = useState('')
   const [generatedCount, setGeneratedCount] = useState(0)
   const [loadingTemplate, setLoadingTemplate] = useState(!!templateId)
-
-  // 范围配置映射
-  const rangeFieldConfig: Record<string, { minKey: string; maxKey: string; minDefault?: number; maxDefault?: number }> = {
-    age: { minKey: 'min_age', maxKey: 'max_age', minDefault: 18, maxDefault: 65 },
-    amount: { minKey: 'min_amount', maxKey: 'max_amount', minDefault: 0.01, maxDefault: 99999.99 },
-    price: { minKey: 'min_price', maxKey: 'max_price', minDefault: 0.01, maxDefault: 99999.99 },
-    stock: { minKey: 'min_stock', maxKey: 'max_stock', minDefault: 1, maxDefault: 1000 },
-  }
+  const [generatorParams, setGeneratorParams] = useState<Record<string, unknown>>({})
 
   // 清理 options 中的 null/undefined，用默认值代替
   const sanitizeOptions = (field: any) => {
@@ -229,7 +241,9 @@ const Generator: React.FC = () => {
       } else {
         // 单字段生成
         const type = Array.isArray(values.generatorType) ? values.generatorType[values.generatorType.length - 1] : values.generatorType
-        const result = await generateData(type, values.count)
+        // 确保传递参数
+        const paramsToSend = Object.keys(generatorParams).length > 0 ? generatorParams : undefined
+        const result = await generateData(type, values.count, paramsToSend)
         const items = result.data
         const displayLabel = getGeneratorLabel(type)
 
@@ -265,6 +279,29 @@ const Generator: React.FC = () => {
       clearInterval(interval)
       setGenerating(false)
     }
+  }
+
+  // 处理生成器类型变化
+  const handleGeneratorTypeChange = (value: string[]) => {
+    const type = value[value.length - 1]
+    // 重置参数
+    if (rangeFieldConfig[type]) {
+      const config = rangeFieldConfig[type]
+      setGeneratorParams({
+        [config.minKey]: config.minDefault,
+        [config.maxKey]: config.maxDefault,
+      })
+    } else {
+      setGeneratorParams({})
+    }
+  }
+
+  // 处理范围参数变化
+  const handleParamChange = (key: string, value: number | null) => {
+    setGeneratorParams(prev => ({
+      ...prev,
+      [key]: value,
+    }))
   }
 
   const handleExport = (format: string) => {
@@ -334,19 +371,69 @@ const Generator: React.FC = () => {
           initialValues={{ count: 10 }}
         >
           {!isTemplateMode && (
-            <Form.Item
-              name="generatorType"
-              label="生成器类型"
-              rules={[{ required: true, message: '请选择生成器类型' }]}
-            >
-              <Cascader
-                placeholder="请选择生成器类型"
-                options={generatorCategories}
-                changeOnSelect={false}
-                displayRender={labels => labels[labels.length - 1]}
-                fieldNames={{ label: 'label', value: 'value', children: 'children' }}
-              />
-            </Form.Item>
+            <>
+              <Form.Item
+                name="generatorType"
+                label="生成器类型"
+                rules={[{ required: true, message: '请选择生成器类型' }]}
+              >
+                <Cascader
+                  id="generator-type"
+                  placeholder="请选择生成器类型"
+                  options={generatorCategories}
+                  changeOnSelect={false}
+                  displayRender={labels => labels[labels.length - 1]}
+                  fieldNames={{ label: 'label', value: 'value', children: 'children' }}
+                  onChange={handleGeneratorTypeChange}
+                />
+              </Form.Item>
+              
+              {/* 范围参数输入区域 */}
+              {!isTemplateMode && form.getFieldValue('generatorType') && (
+                (() => {
+                  const type = form.getFieldValue('generatorType')
+                  const generatorType = Array.isArray(type) ? type[type.length - 1] : type
+                  const config = rangeFieldConfig[generatorType]
+                  if (!config) return null
+                  
+                  const minVal = generatorParams[config.minKey] ?? config.minDefault
+                  const maxVal = generatorParams[config.maxKey] ?? config.maxDefault
+                  const hasError = minVal !== undefined && maxVal !== undefined && (minVal as number) > (maxVal as number)
+                  
+                  return (
+                    <Form.Item
+                      label="范围配置"
+                      validateStatus={hasError ? 'error' : ''}
+                      help={hasError ? '最小值不能大于最大值' : ''}
+                    >
+                      <Space style={{ width: '100%' }}>
+                        <InputNumber
+                          id="range-min"
+                          style={{ width: '45%' }}
+                          placeholder={config.minLabel}
+                          value={minVal}
+                          onChange={(val) => handleParamChange(config.minKey, val)}
+                          min={config.minLimit}
+                          max={config.maxLimit}
+                          precision={config.isInt ? 0 : 2}
+                        />
+                        <Typography.Text type="secondary">~</Typography.Text>
+                        <InputNumber
+                          id="range-max"
+                          style={{ width: '45%' }}
+                          placeholder={config.maxLabel}
+                          value={maxVal}
+                          onChange={(val) => handleParamChange(config.maxKey, val)}
+                          min={config.minLimit}
+                          max={config.maxLimit}
+                          precision={config.isInt ? 0 : 2}
+                        />
+                      </Space>
+                    </Form.Item>
+                  )
+                })()
+              )}
+            </>
           )}
 
           {isTemplateMode && (
@@ -380,12 +467,12 @@ const Generator: React.FC = () => {
             label="生成数量"
             rules={[{ required: true, message: '请输入生成数量' }]}
           >
-            <InputNumber min={1} max={100000} style={{ width: '100%' }} />
+            <InputNumber id="count-input" min={1} max={100000} style={{ width: '100%' }} />
           </Form.Item>
 
           <Form.Item>
             <Space>
-              <Button type="primary" htmlType="submit" loading={generating}>
+              <Button id="generate-btn" type="primary" htmlType="submit" loading={generating}>
                 生成数据
               </Button>
               {isTemplateMode && (
