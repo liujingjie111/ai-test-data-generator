@@ -177,3 +177,116 @@ def generate_data(
             message="Failed to generate data",
             details={"generator_type": generator_type, "error": str(e)},
         ) from e
+
+
+def generate_template_data(
+    template_name: Optional[str],
+    fields: list[dict[str, Any]],
+    count: int,
+    db: Optional[Session] = None,
+    client_ip: Optional[str] = None,
+    api_key_id: Optional[int] = None,
+) -> list[dict[str, Any]]:
+    """Generate data from a template with multiple fields, recording only one history entry.
+
+    Args:
+        template_name: Name of the template being used.
+        fields: List of field definitions with type, label, and params.
+        count: Number of items to generate.
+        db: Optional database session for recording history.
+        client_ip: Optional client IP address for history tracking.
+        api_key_id: Optional API key ID for history tracking.
+
+    Returns:
+        List of generated data dictionaries (each dict has all field labels as keys).
+
+    Raises:
+        DataGenerationError: If any field generation fails.
+    """
+    if count < 1 or count > 100000:
+        raise DataGenerationError(
+            message="Count must be between 1 and 100000",
+            details={"count": count},
+        )
+
+    # Validate all field generators first
+    generators = []
+    field_labels = []
+    for field in fields:
+        try:
+            generator_func = get_generator(field['type'])
+            generators.append((generator_func, field.get('params', {})))
+            field_labels.append(field['label'])
+            _validate_range_params(field['type'], field.get('params'))
+        except ValueError as e:
+            raise DataGenerationError(
+                message=f"Invalid field type '{field['type']}': {str(e)}",
+                details={"field": field},
+            ) from e
+
+    # Create history entry
+    history_id = None
+    generator_type_display = f"template:{template_name or 'custom'}"
+    if db is not None:
+        history = GenerationHistory(
+            generator_type=generator_type_display,
+            count=count,
+            status="running",
+            params=json.dumps({"template_name": template_name, "fields": fields}, ensure_ascii=False),
+            client_ip=client_ip,
+            api_key_id=api_key_id,
+        )
+        db.add(history)
+        db.commit()
+        db.refresh(history)
+        history_id = history.id
+
+    start_time = time.time()
+    try:
+        # Generate all field data first
+        all_field_results = []
+        for generator_func, params in generators:
+            field_result = []
+            for _ in range(count):
+                if params:
+                    value = generator_func(**params)
+                else:
+                    value = generator_func()
+                field_result.append(value)
+            all_field_results.append(field_result)
+
+        # Combine into rows
+        result = []
+        for i in range(count):
+            row = {}
+            for field_idx, label in enumerate(field_labels):
+                row[label] = all_field_results[field_idx][i]
+            result.append(row)
+
+        elapsed = int((time.time() - start_time) * 1000)
+
+        if history_id is not None and db is not None:
+            history = db.query(GenerationHistory).filter(GenerationHistory.id == history_id).first()
+            if history:
+                history.status = "completed"
+                history.result_data = json.dumps(result[:100], ensure_ascii=False)
+                history.completed_at = __import__("datetime").datetime.utcnow()
+                history.duration_ms = elapsed
+                db.commit()
+
+        return result
+    except Exception as e:
+        elapsed = int((time.time() - start_time) * 1000)
+        if history_id is not None and db is not None:
+            history = db.query(GenerationHistory).filter(GenerationHistory.id == history_id).first()
+            if history:
+                history.status = "failed"
+                history.error_msg = str(e)
+                history.completed_at = __import__("datetime").datetime.utcnow()
+                history.duration_ms = elapsed
+                db.commit()
+
+        raise DataGenerationError(
+            message="Failed to generate template data",
+            details={"error": str(e)},
+        ) from e

@@ -6,6 +6,7 @@ import { getTemplate } from '../services/template'
 import { exportToJSON, exportToCSV, exportToSQL, exportToExcel } from '../utils/export'
 import ProgressBar from '../components/ProgressBar'
 import DataPreview from '../components/DataPreview'
+import { generateTemplateData } from '../services/api'
 import type { TemplateField } from '../types'
 import type { ColumnsType } from 'antd/es/table'
 
@@ -191,7 +192,7 @@ const Generator: React.FC = () => {
     }
   }, [searchParams, templateId])
 
-  const handleGenerate = async (values: { count: number }) => {
+  const handleGenerate = async (values: { count: number; generatorType?: string[] }) => {
     setGenerating(true)
     setProgress(0)
     setTableData([])
@@ -203,23 +204,18 @@ const Generator: React.FC = () => {
 
     try {
       if (templateMode) {
-        const count = values.count
-        const allFieldResults: unknown[][] = []
+        // 使用新的模板生成API，只保存一条历史记录
+        const result = await generateTemplateData(
+          templateMode.name,
+          templateMode.fields.map(field => ({
+            type: field.type,
+            label: field.label,
+            params: sanitizeOptions(field)
+          })),
+          values.count
+        )
 
-        for (const field of templateMode.fields) {
-          const result = await generateData(field.type, count, sanitizeOptions(field))
-          allFieldResults.push(result.data.map((item: { data: unknown }) => item.data))
-        }
-
-        const tableRows: TableRowData[] = []
-        for (let i = 0; i < count; i++) {
-          const row: Record<string, unknown> = {}
-          for (let f = 0; f < templateMode.fields.length; f++) {
-            row[templateMode.fields[f].label] = allFieldResults[f][i]
-          }
-          tableRows.push(row)
-        }
-
+        const tableData = result.data
         const tableColumns = templateMode.fields.map(field => ({
           title: field.label,
           dataIndex: field.label,
@@ -228,9 +224,10 @@ const Generator: React.FC = () => {
         }))
 
         setColumns(tableColumns)
-        setTableData(tableRows)
-        setGeneratedCount(count)
+        setTableData(tableData)
+        setGeneratedCount(values.count)
       } else {
+        // 单字段生成
         const type = Array.isArray(values.generatorType) ? values.generatorType[values.generatorType.length - 1] : values.generatorType
         const result = await generateData(type, values.count)
         const items = result.data

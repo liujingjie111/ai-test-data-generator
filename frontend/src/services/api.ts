@@ -44,4 +44,13 @@ export const generateWithAI = async (prompt: string, count: number, apiKey?: str
   return response;
 };
 
+export const generateTemplateData = async (templateName: string | null, fields: Array<{ type: string; label: string; params?: any }>, count: number) => {
+  const response = await api.post('/generate/template', { 
+    template_name: templateName, 
+    fields, 
+    count 
+  });
+  return response;
+};
+
 export default api

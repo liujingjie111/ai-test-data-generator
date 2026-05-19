@@ -4,8 +4,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_database_session, verify_api_key
-from app.schemas import ExportRequest, GeneratorRequest, GeneratorResponse
-from app.services import export_to_csv_bytes, export_to_excel, export_to_json, export_to_sql, generate_data
+from app.schemas import (
+    ExportRequest, GeneratorRequest, GeneratorResponse,
+    TemplateGenerationRequest, TemplateGenerationResponse
+)
+from app.services import (
+    export_to_csv_bytes, export_to_excel, export_to_json, export_to_sql,
+    generate_data, generate_template_data
+)
 
 router = APIRouter(prefix="/generate", tags=["数据生成"])
 
@@ -174,3 +180,38 @@ def export_data_endpoint(
             media_type="text/plain",
             headers={"Content-Disposition": f'attachment; filename="{generator_type}.sql"'},
         )
+
+
+@router.post(
+    "/template",
+    response_model=TemplateGenerationResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="使用模板生成数据",
+    description="使用自定义模板或保存的模板生成多字段测试数据。"
+)
+def generate_template_data_endpoint(
+    request: TemplateGenerationRequest,
+    request_obj: Request,
+    db: Session = Depends(get_database_session),
+    _: str | None = Depends(verify_api_key),
+):
+    """使用模板生成测试数据，只保存一条历史记录。
+
+    Args:
+        request: 包含模板名称、字段定义和数量的请求体。
+        request_obj: FastAPI Request 对象，用于获取客户端 IP。
+        db: 数据库会话，用于记录历史。
+
+    Returns:
+        包含生成数据的响应（每行是一个包含所有字段的对象）。
+    """
+    client_ip = request_obj.client.host if request_obj.client else None
+    fields_dicts = [field.model_dump() for field in request.fields]
+    generated_items = generate_template_data(
+        template_name=request.template_name,
+        fields=fields_dicts,
+        count=request.count,
+        db=db,
+        client_ip=client_ip,
+    )
+    return TemplateGenerationResponse(count=len(generated_items), data=generated_items)

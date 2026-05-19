@@ -9,6 +9,7 @@ const { Title } = Typography
 
 const generatorTypeOptions = [
   { value: 'ai_generation', label: 'AI智能生成' },
+  { value: 'template', label: '模板生成' },
   { value: 'name', label: '姓名' },
   { value: 'email', label: '邮箱' },
   { value: 'phone', label: '手机号' },
@@ -58,12 +59,24 @@ const History: React.FC = () => {
   const fetchList = useCallback(async () => {
     setLoading(true)
     try {
+      // 如果是筛选模板类型，我们需要发送 undefined，然后在前端过滤
+      let apiFilterType = filterType
+      if (filterType === 'template') {
+        apiFilterType = undefined
+      }
       const result = await getHistoryList({
         skip: (page - 1) * pageSize,
         limit: pageSize,
-        generator_type: filterType,
+        generator_type: apiFilterType,
         status: filterStatus,
       })
+      // 如果是模板筛选，前端过滤数据
+      if (filterType === 'template' && result.items) {
+        result.items = result.items.filter((item: HistoryItem) => 
+          item.generator_type.startsWith('template:')
+        )
+        result.total = result.items.length
+      }
       setListData(result)
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : '获取历史记录失败'
@@ -167,7 +180,15 @@ const History: React.FC = () => {
       title: '生成器类型',
       dataIndex: 'generator_type',
       key: 'generator_type',
-      width: 120,
+      width: 150,
+      render: (type: string) => {
+        if (type.startsWith('template:')) {
+          const templateName = type.substring('template:'.length)
+          return <Tag color="blue">{templateName || '自定义模板'}</Tag>
+        }
+        const option = generatorTypeOptions.find(opt => opt.value === type)
+        return option ? option.label : type
+      },
     },
     {
       title: '生成数量',
@@ -341,7 +362,15 @@ const History: React.FC = () => {
           <div>
             <Descriptions column={2} bordered size="small" style={{ marginBottom: 16 }}>
               <Descriptions.Item label="ID">{detailData.id}</Descriptions.Item>
-              <Descriptions.Item label="生成器类型">{detailData.generator_type}</Descriptions.Item>
+              <Descriptions.Item label="生成器类型">
+                {detailData.generator_type.startsWith('template:') ? (
+                  <Tag color="blue">
+                    {detailData.generator_type.substring('template:'.length) || '自定义模板'}
+                  </Tag>
+                ) : (
+                  detailData.generator_type
+                )}
+              </Descriptions.Item>
               <Descriptions.Item label="生成数量">{detailData.count}</Descriptions.Item>
               <Descriptions.Item label="状态">{getStatusTag(detailData.status)}</Descriptions.Item>
               <Descriptions.Item label="耗时">{formatDuration(detailData.duration_ms)}</Descriptions.Item>
@@ -359,6 +388,23 @@ const History: React.FC = () => {
                           ? JSON.parse(detailData.params) 
                           : detailData.params;
                         return parsed.prompt || JSON.stringify(parsed);
+                      } catch {
+                        return String(detailData.params);
+                      }
+                    })()}
+                  </span>
+                </Descriptions.Item>
+              )}
+              {detailData.params && detailData.generator_type.startsWith('template:') && (
+                <Descriptions.Item label="模板字段" span={2}>
+                  <span style={{ wordBreak: 'break-word' }}>
+                    {(() => {
+                      try {
+                        const parsed = typeof detailData.params === 'string' 
+                          ? JSON.parse(detailData.params) 
+                          : detailData.params;
+                        const fields = parsed.fields || [];
+                        return fields.map((f: any) => `${f.label} (${f.type})`).join(', ');
                       } catch {
                         return String(detailData.params);
                       }
