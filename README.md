@@ -330,6 +330,48 @@ console.log(data);
 
 ---
 
+## UI自动化测试
+
+### 快速开始
+
+1. 进入测试目录：
+```bash
+cd ui_tests
+```
+
+2. 查看所有可用的测试模块：
+```bash
+python run_tests.py -l
+```
+
+3. 运行所有测试：
+```bash
+python run_tests.py
+```
+
+4. 运行特定模块测试：
+```bash
+python run_tests.py -m test_generator
+```
+
+### 查看测试报告
+
+#### 在线报告（实时查看）
+```bash
+python generate_online_report.py
+```
+
+#### 离线报告（静态HTML）
+```bash
+python generate_offline_report.py
+```
+
+### 更多信息
+
+详细的测试文档请参考 [ui_tests/README.md](ui_tests/README.md) 和 [ui_tests/QUICKSTART.md](ui_tests/QUICKSTART.md)
+
+---
+
 ## 许可证
 
 本项目仅供学习和内部使用。

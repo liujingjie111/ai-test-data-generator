@@ -39,8 +39,8 @@ class TemplatesPage(BasePage):
     FIELD_DELETE_BUTTON = (By.XPATH, '(//button[contains(@class, "ant-btn-dangerous")])[1]')
 
     # 弹窗按钮
-    SAVE_BUTTON = (By.XPATH, '//button[contains(., "保存") and @type="button"] | //button[text()="保存"]')
-    CANCEL_BUTTON = (By.XPATH, '//button[contains(., "取消") and @type="button"] | //button[text()="取消"]')
+    SAVE_BUTTON = (By.XPATH, '//button[.//span[text()="保存"]]')
+    CANCEL_BUTTON = (By.XPATH, '//button[.//span[text()="取消"]]')
 
     # 确认删除弹窗
     CONFIRM_DELETE_MODAL = (By.XPATH, '//div[contains(@class, "ant-modal-confirm-body")]')
@@ -105,10 +105,12 @@ class TemplatesPage(BasePage):
         # 点击类型选择器
         select_locator = (By.XPATH, f'(//div[contains(@class, "ant-select")])[{index + 1}]')
         self.click(select_locator)
-        time.sleep(0.5)
         
-        # 选择类型
-        option_locator = (By.XPATH, f'//div[contains(@class, "ant-select-item-option") and text()="{field_type}"]')
+        # 等待下拉选项出现并点击选项
+        option_locator = (By.XPATH, f'//div[contains(@class, "ant-select-item-option") and .//div[text()="{field_type}"]]')
+        
+        # 等待选项可点击
+        self.wait.until(EC.element_to_be_clickable(option_locator))
         self.click(option_locator)
         time.sleep(0.5)
 

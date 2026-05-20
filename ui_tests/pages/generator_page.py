@@ -32,6 +32,8 @@ class GeneratorPage(BasePage):
     # 错误提示
     ERROR_MESSAGE = (By.XPATH, '//div[contains(@class, "ant-message-error")]')
     SUCCESS_MESSAGE = (By.XPATH, '//div[contains(@class, "ant-message-success")]')
+    # 内联表单错误提示
+    INLINE_ERROR = (By.XPATH, '//div[contains(@class, "ant-form-item-explain-error")]')
 
     def select_generator(self, category: str, generator: str) -> None:
         """
@@ -160,6 +162,18 @@ class GeneratorPage(BasePage):
             是否显示
         """
         return self.is_element_present(self.ERROR_MESSAGE, timeout=timeout)
+    
+    def is_inline_error_displayed(self, timeout: int = 5) -> bool:
+        """
+        检查内联表单错误提示是否显示
+
+        Args:
+            timeout: 超时时间（秒）
+
+        Returns:
+            是否显示
+        """
+        return self.is_element_present(self.INLINE_ERROR, timeout=timeout)
 
     def is_on_generator_page(self) -> bool:
         """
