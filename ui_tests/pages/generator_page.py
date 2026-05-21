@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 
 from base.base_page import BasePage
+from config import EXPLICIT_WAIT, EXPLICIT_WAIT_LONG, EXPLICIT_WAIT_SHORT
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -18,8 +19,8 @@ class GeneratorPage(BasePage):
     # 定位器
     PAGE_TITLE = (By.XPATH, '//*[contains(text(), "内置生成器") or contains(text(), "使用模板")]')
     
-    # 使用 id 定位
-    GENERATOR_SELECTOR = (By.ID, 'generator-type')
+    # Cascader 级联选择器 - 需要点击可见的选择器元素而非隐藏的 input
+    GENERATOR_SELECTOR = (By.XPATH, '//input[@id="generator-type"]/ancestor::div[contains(@class, "ant-select-selector")]')
     COUNT_INPUT = (By.ID, 'count-input')
     GENERATE_BUTTON = (By.ID, 'generate-btn')
     RANGE_MIN_INPUT = (By.ID, 'range-min')
@@ -45,18 +46,20 @@ class GeneratorPage(BasePage):
         """
         logger.info(f"选择生成器: {category} -> {generator}")
         
-        # 点击级联选择器
+        # 点击级联选择器（可见的选择器元素）
         self.click(self.GENERATOR_SELECTOR)
         
         # 点击分类
-        cat_elem = WebDriverWait(self.driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, f'//*[text()="{category}"]'))
+        cat_locator = (By.XPATH, f'//li[contains(@class, "ant-cascader-menu-item") and contains(., "{category}")]')
+        cat_elem = WebDriverWait(self.driver, EXPLICIT_WAIT).until(
+            EC.element_to_be_clickable(cat_locator)
         )
         cat_elem.click()
         
         # 点击生成器
-        gen_elem = WebDriverWait(self.driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, f'//*[text()="{generator}"]'))
+        gen_locator = (By.XPATH, f'//li[contains(@class, "ant-cascader-menu-item") and contains(., "{generator}")]')
+        gen_elem = WebDriverWait(self.driver, EXPLICIT_WAIT).until(
+            EC.element_to_be_clickable(gen_locator)
         )
         gen_elem.click()
 
@@ -70,7 +73,7 @@ class GeneratorPage(BasePage):
         logger.info(f"设置生成数量: {count}")
         
         # 找到输入框
-        count_input = WebDriverWait(self.driver, 10).until(
+        count_input = WebDriverWait(self.driver, EXPLICIT_WAIT).until(
             EC.presence_of_element_located(self.COUNT_INPUT)
         )
         
@@ -94,7 +97,7 @@ class GeneratorPage(BasePage):
         
         # 设置最小值
         if min_val is not None:
-            min_input = WebDriverWait(self.driver, 10).until(
+            min_input = WebDriverWait(self.driver, EXPLICIT_WAIT).until(
                 EC.presence_of_element_located(self.RANGE_MIN_INPUT)
             )
             min_input.click()
@@ -104,7 +107,7 @@ class GeneratorPage(BasePage):
         
         # 设置最大值
         if max_val is not None:
-            max_input = WebDriverWait(self.driver, 10).until(
+            max_input = WebDriverWait(self.driver, EXPLICIT_WAIT).until(
                 EC.presence_of_element_located(self.RANGE_MAX_INPUT)
             )
             max_input.click()
@@ -117,16 +120,18 @@ class GeneratorPage(BasePage):
         logger.info("点击生成按钮")
         self.click(self.GENERATE_BUTTON)
 
-    def wait_for_data_generated(self, timeout: int = 30) -> bool:
+    def wait_for_data_generated(self, timeout: int = None) -> bool:
         """
         等待数据生成完成
 
         Args:
-            timeout: 超时时间（秒）
+            timeout: 超时时间（秒），默认使用配置中的长超时
 
         Returns:
             是否成功生成
         """
+        if timeout is None:
+            timeout = EXPLICIT_WAIT_LONG
         try:
             WebDriverWait(self.driver, timeout).until(
                 EC.presence_of_element_located(self.DATA_TABLE)

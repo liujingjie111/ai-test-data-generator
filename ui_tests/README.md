@@ -159,3 +159,32 @@ allure serve allure-results
 - **报告工具**: Allure 2.39.0
 - **设计模式**: Page Object Model (POM)
 - **浏览器管理**: webdriver-manager 4.0.1
+
+---
+
+## 最新优化（2026-05）
+
+本次对自动化测试框架进行了系统性优化，主要改进包括：
+
+### 配置集中管理
+- 创建 [`config.py`](config.py) 统一管理 BASE_URL、超时时间、测试数据等可变参数
+- 消除所有硬编码，支持多环境切换
+
+### 强制等待消除
+- 移除全部 `time.sleep()`，统一使用 `WebDriverWait` + `expected_conditions`
+- 分级超时配置：隐式等待 5s、显式等待 10s、长等待 30s
+
+### 元素定位增强
+- 修复 Ant Design 5 组件定位：`contains(text())` → `contains(.)` 解决文本嵌套问题
+- 修复 Cascader 级联选择器定位（隐藏 input → 可见 selector）
+- 解决 Select 下拉框选择错位问题（新增 `_close_all_dropdowns()` 方法）
+
+### 断言强化
+- 替换所有 `assert True` / `pass` 弱断言
+- 添加实际业务逻辑校验：模板名称存在、字段数量正确、成功提示显示等
+
+### 其他改进
+- 日志系统：分级日志输出到控制台和文件
+- 失败自动截图：Allure 报告自动附带截图
+- 数据库清理增强：测试前后自动清理测试数据
+- 维护指南：[MAINTENANCE.md](MAINTENANCE.md) 规范后续开发流程

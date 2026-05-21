@@ -332,43 +332,47 @@ console.log(data);
 
 ## UI自动化测试
 
+基于 pytest + Selenium + Allure 的 UI 自动化测试体系，采用 **Page Object Model (POM)** 设计模式，覆盖平台核心功能模块。
+
+### 测试覆盖
+
+| 模块 | 测试文件 | 用例数 | 状态 |
+|------|---------|:------:|:----:|
+| 内置生成器 | `test_generator.py` | 8 | ✅ 全部通过 |
+| 模板管理 | `test_templates.py` | 8 | ✅ 全部通过 |
+| **总计** | | **16** | **✅ 全部通过** |
+
 ### 快速开始
 
-1. 进入测试目录：
 ```bash
+# 1. 进入测试目录
 cd ui_tests
-```
 
-2. 查看所有可用的测试模块：
-```bash
+# 2. 查看所有可用的测试模块
 python run_tests.py -l
-```
 
-3. 运行所有测试：
-```bash
+# 3. 运行所有测试
 python run_tests.py
-```
 
-4. 运行特定模块测试：
-```bash
+# 4. 运行特定模块
 python run_tests.py -m test_generator
 ```
 
 ### 查看测试报告
 
-#### 在线报告（实时查看）
 ```bash
+# 在线报告（实时查看）
 python generate_online_report.py
-```
 
-#### 离线报告（静态HTML）
-```bash
+# 离线报告（静态HTML）
 python generate_offline_report.py
 ```
 
 ### 更多信息
 
-详细的测试文档请参考 [ui_tests/README.md](ui_tests/README.md) 和 [ui_tests/QUICKSTART.md](ui_tests/QUICKSTART.md)
+- [ui_tests/README.md](ui_tests/README.md) — 自动化测试详细文档
+- [ui_tests/QUICKSTART.md](ui_tests/QUICKSTART.md) — 快速启动指南
+- [ui_tests/MAINTENANCE.md](ui_tests/MAINTENANCE.md) — 维护指南与开发规范
 
 ---
 

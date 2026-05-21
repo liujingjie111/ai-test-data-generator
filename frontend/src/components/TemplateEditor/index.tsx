@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Form, Input, InputNumber, Button, Select, Space, Card, Typography } from 'antd'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { TemplateField } from '../../types'
+
+// 生成唯一ID
+let idCounter = 0
+const generateId = () => `field_${Date.now()}_${idCounter++}`
 
 interface TemplateEditorProps {
   initialData?: {
@@ -136,18 +140,21 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
 
   const addField = () => {
     const defaultType = 'name'
-    setFields([
-      ...fields,
+    // 使用函数式更新避免闭包问题，并添加唯一ID
+    setFields(prevFields => [
+      ...prevFields,
       { 
+        id: generateId(),
         type: defaultType, 
         label: getFieldLabelByType(defaultType), 
         required: false 
-      },
+      } as any,
     ])
   }
 
   const removeField = (index: number) => {
-    setFields(fields.filter((_, i) => i !== index))
+    // 使用函数式更新避免闭包问题
+    setFields(prevFields => prevFields.filter((_, i) => i !== index))
   }
 
   const updateField = (
@@ -155,18 +162,27 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     key: keyof TemplateField,
     value: unknown,
   ) => {
-    const newFields = [...fields]
-    newFields[index] = { ...newFields[index], [key]: value }
-    setFields(newFields)
+    // 使用函数式更新避免闭包问题
+    setFields(prevFields => {
+      const newFields = [...prevFields]
+      newFields[index] = { ...newFields[index], [key]: value }
+      return newFields
+    })
   }
 
   const updateFieldMultiple = (
     index: number,
     updates: Partial<TemplateField>,
   ) => {
-    const newFields = [...fields]
-    newFields[index] = { ...newFields[index], ...updates }
-    setFields(newFields)
+    // 使用函数式更新避免闭包问题
+    setFields(prevFields => {
+      console.log(`[TemplateEditor] updateFieldMultiple: index=${index}, updates=`, updates)
+      console.log(`[TemplateEditor] prevFields:`, prevFields.map((f, i) => `i=${i},type=${f.type}`).join('; '))
+      const newFields = [...prevFields]
+      newFields[index] = { ...newFields[index], ...updates }
+      console.log(`[TemplateEditor] newFields:`, newFields.map((f, i) => `i=${i},type=${f.type}`).join('; '))
+      return newFields
+    })
   }
 
   const getRangeError = (index: number): string | undefined => {
@@ -261,7 +277,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
 
           return (
             <Card
-              key={index}
+              key={(field as any).id || `field_${index}`}
               size="small"
               style={{ marginBottom: 12 }}
               extra={
@@ -281,6 +297,8 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     placeholder="请选择字段类型"
                     onChange={(value) => {
                       // 当类型改变时，自动更新标签为对应类型名，一次性更新避免状态问题
+                      console.log(`[TemplateEditor] Select onChange触发: index=${index}, 当前field.type=${field.type}, 新value=${value}, field.id=${(field as any).id || '无id'}`)
+                      console.log(`[TemplateEditor] 当前fields状态:`, fields.map((f, i) => `i=${i},type=${f.type}`).join('; '))
                       updateFieldMultiple(index, {
                         type: value,
                         label: getFieldLabelByType(value),

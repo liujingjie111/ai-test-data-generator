@@ -20,6 +20,7 @@ sys.path.insert(0, os.path.join(project_root, 'ui_tests'))
 
 from utils.logger import get_logger
 from utils.screenshot import capture_screenshot
+from config import IMPLICIT_WAIT
 
 logger = get_logger(__name__)
 
@@ -106,6 +107,9 @@ def driver():
             service=Service(chromedriver_path),
             options=chrome_options
         )
+        
+        # 设置隐式等待（全局兜底等待）
+        driver.implicitly_wait(IMPLICIT_WAIT)
         
         logger.info("WebDriver 初始化成功！")
         

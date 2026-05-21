@@ -30,15 +30,28 @@ def get_db_session() -> Session:
 
 def cleanup_test_templates() -> None:
     """
-    清理测试模板（名称包含 "test" 或 "测试" 的模板）
+    清理所有测试模板数据
+    匹配规则：名称包含中文"测试"、英文"test"、"(copy)"，或所有在 TEMPLATE_NAMES 中定义的模板名称
     """
     db = get_db_session()
     try:
-        # 查找并删除测试模板
-        test_templates = db.query(Template).filter(
-            (Template.name.like("%test%")) |
-            (Template.name.like("%测试%"))
-        ).all()
+        # 所有需要清理的模板名称模式
+        filter_conditions = [
+            Template.name.like("%测试%"),
+            Template.name.like("%test%"),
+            Template.name.like("%(copy)%"),
+            Template.name.like("%待删除%"),
+            Template.name.like("%待复制%"),
+            Template.name.like("%待编辑%"),
+            Template.name.like("%已编辑%"),
+            Template.name.like("%编辑取消%"),
+            Template.name.like("%多字段%"),
+            Template.name.like("%用于生成%"),
+        ]
+
+        # 组合查询条件（OR）
+        from sqlalchemy import or_
+        test_templates = db.query(Template).filter(or_(*filter_conditions)).all()
 
         for template in test_templates:
             db.delete(template)

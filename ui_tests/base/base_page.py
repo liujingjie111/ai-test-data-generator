@@ -11,6 +11,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 
+from config import BASE_URL, EXPLICIT_WAIT
 from utils.logger import get_logger
 
 
@@ -20,17 +21,17 @@ logger = get_logger(__name__)
 class BasePage:
     """基础页面类"""
 
-    def __init__(self, driver: WebDriver, base_url: str = "http://localhost:5174"):
+    def __init__(self, driver: WebDriver, base_url: str = None):
         """
         初始化基础页面
 
         Args:
             driver: Selenium WebDriver 对象
-            base_url: 基础 URL
+            base_url: 基础 URL，默认从配置读取
         """
         self.driver = driver
-        self.base_url = base_url
-        self.wait = WebDriverWait(driver, 10)  # 默认等待10秒
+        self.base_url = base_url or BASE_URL
+        self.wait = WebDriverWait(driver, EXPLICIT_WAIT)
 
     def open(self, url: str = "") -> None:
         """
@@ -74,14 +75,42 @@ class BasePage:
 
     def click(self, locator: tuple) -> None:
         """
-        点击元素
+        点击元素（等待元素可点击后再点击）
 
         Args:
             locator: 定位器元组
         """
-        element = self.find_element(locator)
+        element = self.wait_for_element_clickable(locator)
         logger.info(f"点击元素: {locator}")
         element.click()
+
+    def click_by_element(self, element: WebElement) -> None:
+        """
+        直接点击 WebElement 对象（避免每次重新查找）
+
+        Args:
+            element: WebElement 对象
+        """
+        logger.info(f"点击元素: tag={element.tag_name}, text={element.text[:30]}")
+        element.click()
+
+    def click_and_retry(self, locator: tuple, retries: int = 3) -> None:
+        """
+        带重试的点击，适用于 Ant Design 等动态组件
+
+        Args:
+            locator: 定位器元组
+            retries: 重试次数
+        """
+        for attempt in range(retries):
+            try:
+                element = self.wait_for_element_clickable(locator)
+                element.click()
+                return
+            except Exception as e:
+                if attempt == retries - 1:
+                    raise
+                logger.warning(f"点击失败(第{attempt + 1}次)，重试: {e}")
 
     def send_keys(self, locator: tuple, text: str, clear: bool = True) -> None:
         """
@@ -92,7 +121,7 @@ class BasePage:
             text: 要输入的文本
             clear: 是否先清空内容
         """
-        element = self.find_element(locator)
+        element = self.wait_for_element_clickable(locator)
         if clear:
             element.clear()
         logger.info(f"输入文本: {text} 到元素: {locator}")
@@ -163,6 +192,21 @@ class BasePage:
         """
         return WebDriverWait(self.driver, timeout).until(
             EC.element_to_be_clickable(locator)
+        )
+
+    def wait_for_element_visible(self, locator: tuple, timeout: int = 10) -> WebElement:
+        """
+        等待元素可见
+
+        Args:
+            locator: 定位器元组
+            timeout: 超时时间（秒）
+
+        Returns:
+            WebElement
+        """
+        return WebDriverWait(self.driver, timeout).until(
+            EC.visibility_of_element_located(locator)
         )
 
     def wait_for_text(self, locator: tuple, text: str, timeout: int = 10) -> bool:
